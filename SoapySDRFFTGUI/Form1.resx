@@ -117,4 +117,32 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <metadata name="$this.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAABMLAAATCwAAAAAAAAAA
+        AAArKysSKysroisrK+YrKyvtKysr7SsrK+0rKyvtKysr7SsrK+0rKyvtKysr7SsrK+0rKyvtKysr5isr
+        K6IrKysSKysroysrK/8rKyv/Kysr/ysrK/8rKyv/Kysr/ysqKv8rKir/Kysr/ysrK/8rKyv/Kysr/ysr
+        K/8rKyv/KysroysrK+wrKyv/Kysr/ysrK/8rKyv/KyYo/yskJ/8sKyv/LCor/yskJ/8rJyj/Kysr/ysr
+        K/8rKyv/Kysr/ysrK+wrKyvuKysr/ysrK/8rKyv/KyUn/yxGPP8rfF3/KZNr/ymRav8rd1r/LD84/ysl
+        J/8rKyv/Kysr/ysrK/8rKyvuKysr7SsrK/8rKyv/KyUn/yxgTf8qrnz/KLR//yixff8osX7/KLWA/yqq
+        ev8tVEX/KyUn/ysrK/8rKyv/Kysr7SsrK+0rKyv/KyUo/y1KP/8tsoD/LLF//yyuff8srn3/LK59/yyu
+        ff8ss4D/Lap7/yw9N/8rJyj/Kysr/ysrK+0rKyvtKysr/yslJ/8whmb/MbqG/zGxgf8xsYH/MbGB/zGx
+        gf8xsYH/MbGB/zG7h/8wdVv/KyMm/ysrK/8rKyvtKysr7SspKv8sLi3/NqB4/ze5iP83tYb/N7WG/ze1
+        hv83tYb/N7WG/ze1hv83u4r/NZNw/ysnKf8rKiv/Kysr7SsrK+0rKSr/LC4t/zykff8/vY7/P7mL/z+5
+        i/8/uYv/P7mL/z+5i/8/uYv/QMCP/zqWc/8rJyj/Kyor/ysrK+0rKyvtKysr/yokJ/8+jG//SceX/0e9
+        kf9HvZH/R72R/0e9kf9HvZH/R72Q/0nImP86e2L/KSMl/ysrK/8rKyvtKysr7SsrK/8qJSf/M01D/1DF
+        mf9Rxpr/UMGX/1DCl/9Qwpf/UMGX/1HHm/9OvJP/Lz85/yonKP8rKyv/Kysr7SsrK+0rKyv/Kysr/ykj
+        Jv87aFf/WMed/1vQpP9ay6H/Wsyh/1vQpf9VwZj/N1lM/ykkJv8rKyv/Kysr/ysrK+0rKyvuKysr/ysr
+        K/8rKyv/KSMl/zRKQv9JjHP/UqmJ/1Knh/9GhW7/MUI8/ykjJv8rKyv/Kysr/ysrK/8rKyvuKysr7Csr
+        K/8rKyv/Kysr/ysrK/8pJSf/KCMl/yoqKv8qKSn/KCIl/yomJ/8rKyv/Kysr/ysrK/8rKyv/Kysr7Csr
+        K6QrKyv/Kysr/ysrK/8rKyv/Kysr/ysrK/8rKir/Kyoq/ysrK/8rKyv/Kysr/ysrK/8rKyv/Kysr/ysr
+        K6QrKysSKysroisrK+YrKyvtKysr7SsrK+0rKyvtKysr7SsrK+0rKyvtKysr7SsrK+0rKyvtKysr5isr
+        K6IrKysSAAAgRgAAaWwAADYgAABkZQAAMjYAAHRlAABpbgAANSwAAGVuAABuZQAAdGUAAFBSAABFUwAA
+        Ul8AAFZFAAA2AA==
+</value>
+  </data>
 </root>

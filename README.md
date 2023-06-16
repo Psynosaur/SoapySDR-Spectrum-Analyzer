@@ -9,8 +9,12 @@ SoapySDR FFT viewer(in progress)
  - PlutoSDR
  - SDRPlay 
 
-![Screen](img.png) 
-
+### Initial Device enumeration
+![Screen](./SoapySDRFFTGUI/images/initial.png)
+### Query SDR device
+![Screen](./SoapySDRFFTGUI/images/query.png)
+### Read 15 samples
+![Screen](./SoapySDRFFTGUI/images/sample.png)
 ### TO DO :
 
   - MSI installer
@@ -18,11 +22,11 @@ SoapySDR FFT viewer(in progress)
     - Adds environment variable SOAPY_SDR_ROOT
     - Optionally add to PATH..
   - Interface
-    - List available sample rates
+    - [x] List available sample rates
     - Gain slider(s)
     - PlutoSDR
       - Network address box
       - Auto discovery?
-    - Connect to RX stream
+    - [x] Connect to RX stream 
     - Draw spectrum window 
   - More to come . . .
