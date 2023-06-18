@@ -191,6 +191,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="images\initial.png" />
+    <Content Include="images\query.png" />
+    <Content Include="images\sample.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\FFTW.NET.1.0.1\build\netstandard1.3\FFTW.NET.targets" Condition="Exists('..\packages\FFTW.NET.1.0.1\build\netstandard1.3\FFTW.NET.targets')" />
