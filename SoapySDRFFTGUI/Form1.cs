@@ -326,7 +326,7 @@ namespace SoapySDRFFTGUI
                         comboBox2.Enabled = false;
 
                         if (!errorCode.Equals(ErrorCode.Overflow))
-                            ExampleUsePlanDirectly(new float[0], shortBuffer, _rxStreams[sdrNumber], numberOfSamples);
+                            Data_To_FFT(new float[0], shortBuffer, _rxStreams[sdrNumber], numberOfSamples);
                         streamResult.Dispose();
                     }
                     if (format.Equals(StreamFormat.ComplexFloat32))
@@ -346,7 +346,7 @@ namespace SoapySDRFFTGUI
                         comboBox2.Enabled = false;
 
                         if (!errorCode.Equals(ErrorCode.Overflow))
-                            ExampleUsePlanDirectly(floatBuffer, new short[0], _rxStreams[sdrNumber], numberOfSamples, true);
+                            Data_To_FFT(floatBuffer, new short[0], _rxStreams[sdrNumber], numberOfSamples, true);
                         streamResult.Dispose();
                     }
                 }
@@ -365,7 +365,7 @@ namespace SoapySDRFFTGUI
             Restore_Window_Location();
         }
 
-        private void ExampleUsePlanDirectly(float[] floatBuffer,short[] shortBuffer, RxStream rxStream, decimal numSamps, bool floats = false)
+        private void Data_To_FFT(float[] floatBuffer,short[] shortBuffer, RxStream rxStream, decimal numSamps, bool floats = false)
         {
             var selectedSDR = comboBox1.SelectedItem;
             var sampleRate = 0d;
@@ -391,7 +391,7 @@ namespace SoapySDRFFTGUI
             int out_r;
             int out_i;
             var strb = new StringBuilder();
-            var chunks = sampleRate / FFT_SIZE;
+            var chunks = sampleRate / FFT_SIZE / 1_000f;
             while (cnt < (int)(rxStream.MTU / FFT_SIZE))
             {
                 int offset;
@@ -461,9 +461,10 @@ namespace SoapySDRFFTGUI
             }
 
             var buffLen = floats ? floatBuffer.Length : shortBuffer.Length;
-            listBox1.Items.Add($" Each FFT point is {chunks/1_000f} kHz wide ");
+            listBox1.Items.Add($" Each FFT point is {chunks} kHz wide ");
             listBox1.Items.Add($" Chunks of {FFT_SIZE} FFT:  {cnt}");
             listBox1.Items.Add($" Buffer length:  {buffLen}");
+            listBox1.Items.Add($" Start Frequency :   {buffLen}");
             Logger.Log(LogLevel.Info, $"{strb}");
         }
 
