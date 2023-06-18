@@ -367,6 +367,13 @@ namespace SoapySDRFFTGUI
 
         private void ExampleUsePlanDirectly(float[] floatBuffer,short[] shortBuffer, RxStream rxStream, decimal numSamps, bool floats = false)
         {
+            var selectedSDR = comboBox1.SelectedItem;
+            var sampleRate = 0d;
+
+            foreach (var sdr in SDRs)
+                if (sdr.DriverKey.Equals(selectedSDR))
+                    sampleRate = sdr.GetSampleRate(Direction.Rx, 0);
+
             // Use the same arrays for as many transformations as you like.
             // If you can use the same arrays for your transformations, this is faster than calling DFT.FFT / DFT.IFFT
             // TODO: This is a combo of rtl_map and eshail-ghy-wb-fft-airspy from BATC, regarding data transforms.
@@ -384,7 +391,7 @@ namespace SoapySDRFFTGUI
             int out_r;
             int out_i;
             var strb = new StringBuilder();
-            var chunks = 10_000_000 / FFT_SIZE;
+            var chunks = sampleRate / FFT_SIZE;
             while (cnt < (int)(rxStream.MTU / FFT_SIZE))
             {
                 int offset;
@@ -454,7 +461,8 @@ namespace SoapySDRFFTGUI
             }
 
             var buffLen = floats ? floatBuffer.Length : shortBuffer.Length;
-            listBox1.Items.Add($" Chunks of {FFT_SIZE} FFT:  {cnt} x {chunks/1_000f} kHz");
+            listBox1.Items.Add($" Each FFT point is {chunks/1_000f} kHz wide ");
+            listBox1.Items.Add($" Chunks of {FFT_SIZE} FFT:  {cnt}");
             listBox1.Items.Add($" Buffer length:  {buffLen}");
             Logger.Log(LogLevel.Info, $"{strb}");
         }
