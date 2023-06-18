@@ -52,7 +52,7 @@ namespace SoapySDRFFTGUI
             gainTextBoxes[tag].Text = "" + ((TrackBar)sender).Value;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void QuerySdrButton1Click(object sender, EventArgs e)
         {
             // Query device info.
             var selectedSDR = comboBox1.SelectedItem;
@@ -82,8 +82,8 @@ namespace SoapySDRFFTGUI
                     var strBuilder = new StringBuilder();
                     listBox1.Items.Add(" Sample formats:");
                     strBuilder.Append("  * ");
-                    foreach (var format in formats)
-                        strBuilder.Append(format + " ");
+                    foreach (var format in formats) strBuilder.Append(format + " ");
+
                     listBox1.Items.Add(strBuilder);
 
                     var bandwidthRange = sdr.GetBandwidthRange(Direction.Rx, 0);
@@ -107,9 +107,19 @@ namespace SoapySDRFFTGUI
                     uint i = 0;
                     foreach (var gain in sdr.ListGains(Direction.Rx, 0))
                     {
-                        Range gainRange = sdr.GetGainRange(Direction.Rx, i);
-                        listBox1.Items.Add("  * " + gain + " : " + sdr.GetGain(Direction.Rx, 0, gain));
-                        listBox1.Items.Add("  * " + gainRange);
+                        if (!sdr.DriverKey.Equals("Airspy"))
+                        {
+                            Range gainRange = sdr.GetGainRange(Direction.Rx, i);
+                            listBox1.Items.Add("  * " + gain + " : " + sdr.GetGain(Direction.Rx, 0, gain));
+                            listBox1.Items.Add("  * " + gainRange);
+                        }
+                        if (sdr.DriverKey.Equals("Airspy"))
+                        {
+                            Range gainRange = sdr.GetGainRange(Direction.Rx, i, gain);
+                            listBox1.Items.Add("  * " + gain + " : " + sdr.GetGain(Direction.Rx, 0, gain));
+                            listBox1.Items.Add("  * " + gainRange);
+                        }
+                        
                         // panel1 = new Panel();
                         // // 
                         // // panel1
@@ -205,9 +215,8 @@ namespace SoapySDRFFTGUI
                 {
                     argsStr.Add(tuple.Key.ToLowerInvariant() + "=" + tuple.Value.ToLowerInvariant());
                 }
-                // Console.WriteLine(tuple);
             }
-
+            // TODO: should be network address input box, with search for button... 
             if (!firstSDR)
                 argsStr.Add("driver=plutosdr,hostname=192.168.2.1");
 
@@ -223,10 +232,10 @@ namespace SoapySDRFFTGUI
                 sdr.SetFrequency(Direction.Rx, 0, qo100CenterFreq);
                 if (sdr.DriverKey.Equals("Airspy"))
                 {
-                    var val = sdr.GetGainRange(Direction.Rx, 0).Maximum * 0.7;
-                    sdr.SetGain(Direction.Rx, 0, "LNA", val);
-                    sdr.SetGain(Direction.Rx, 0, "MIX", val);
-                    sdr.SetGain(Direction.Rx, 0, "VGA", val);
+                    // var val = sdr.GetGainRange(Direction.Rx, 0).Maximum * 0.7;
+                    sdr.SetGain(Direction.Rx, 0, "LNA", 9);
+                    sdr.SetGain(Direction.Rx, 0, "MIX", 9);
+                    sdr.SetGain(Direction.Rx, 0, "VGA", 9);
                 }
 
                 if (!sdr.DriverKey.Equals("Airspy"))
@@ -238,11 +247,18 @@ namespace SoapySDRFFTGUI
                 SDRs.Add(sdr);
 
                 comboBox1.Items.Add(sdr.DriverKey);
+                // sets stream format of first detected sdr 
                 if (!firstSDR)
                 {
                     firstSDR = true;
                     comboBox1.SelectedItem = sdr.DriverKey;
+                    var nativeStreamFormat = sdr.GetNativeStreamFormat(Direction.Rx, 0, out _);
+
+                    var formats = sdr.GetStreamFormats(Direction.Rx, 0);
+                    foreach (var format in formats) comboBox2.Items.Add(format);
+                    comboBox2.SelectedItem = nativeStreamFormat;
                 }
+
 
                 sdrList.Add(sdr.DriverKey);
             }
@@ -266,64 +282,73 @@ namespace SoapySDRFFTGUI
                 if (sdr.DriverKey.Equals(selectedSDR))
                 {
                     // Apply settings.
-                    // var sampleRate = sdr.GetSampleRate(Direction.Rx, 0);
                     var sampleRate = sdr.DriverKey.Equals("RTLSDR") ? 2.4e06 : 10e06;
                     var qo100CenterFreq = 745.5e6;
                     var m = 1_000_000;
-                    // sdr.SetSampleRate(Direction.Rx, 0, sampleRate);
-                    // sdr.SetFrequency(Direction.Rx, 0, qo100CenterFreq);
+
+                    var format = comboBox2.SelectedItem.ToString();
+                    var formatSize = StreamFormat.FormatToSize(format);
+                    
+                    // Create a reusable arrays for RX samples.
+                    float[] floatBuffer;
+                    short[] shortBuffer;
+                    
                     // Setup a stream (complex floats).
                     uint[] channels = { 0 };
                     if (_rxStreams[sdrNumber] is null)
                     {
-                        _rxStreams[sdrNumber] = sdr.SetupRxStream("CF32", channels, "");
+                        _rxStreams[sdrNumber] = sdr.SetupRxStream(format, channels, "bitpack=true");
                         _rxStreams[sdrNumber].Activate(); // Start streaming
                     }
 
-                    // Create a reusable array for RX samples.
-                    float[] buff = new float[_rxStreams[sdrNumber].MTU * 4];
-
+                    var MTU = _rxStreams[sdrNumber].MTU;
+                    StreamResult streamResult;
+                    
                     // Receive some samples.
                     listBox1.Items.Clear();
-                    uint n = 1;
-                    listBox1.Items.Add($"Reading {n} samples, at {sampleRate / m} MSPS at {qo100CenterFreq / m} MHz");
-                    // uint FFT_SIZE = 1024;
-                    StreamResult streamResult;
+                    uint numberOfSamples = 1;
+                    listBox1.Items.Add($"Reading {numberOfSamples} samples, at {sampleRate / m} MSPS at {qo100CenterFreq / m} MHz");
+                    listBox1.Items.Add($"Format {format} -> {formatSize} bytes * {MTU} bytes (MTU)");
+                    if (format.Equals(StreamFormat.ComplexInt16))
+                    {
+                        // if (_rxStreams[sdrNumber].Format.Equals(StreamFormat.ComplexFloat32))
+                        // {
+                        //     // Disable 16bit stream and start a 32bit one
+                        //     _rxStreams[sdrNumber].Deactivate();
+                        //     _rxStreams[sdrNumber] = sdr.SetupRxStream(format, channels, "bitpack=true");
+                        //     _rxStreams[sdrNumber].Activate(); 
+                        // }
+                        shortBuffer = new short[MTU * formatSize];
+                        var errorCode = _rxStreams[sdrNumber].Read(ref shortBuffer, 100000, out streamResult);
+                        if (selectedSDR.Equals("Airspy") && errorCode.Equals(ErrorCode.Overflow))
+                            errorCode = _rxStreams[sdrNumber].Read(ref shortBuffer, 100000, out streamResult);
+                        listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Error code:     " + errorCode);
+                        comboBox2.Enabled = false;
 
-                    // var bufferSlice = floatSpan.Slice((int)totalSamps, (int)expectedSamps);
-                    var errorCode = _rxStreams[sdrNumber].Read(ref buff, 100, out streamResult);
-                    listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Error code:     " + errorCode);
-                    if (!errorCode.Equals(ErrorCode.Overflow))
-                        ExampleUsePlanDirectly(buff, n, _rxStreams[sdrNumber]);
-                    // Span<float> floatSpan = MemoryMarshal.Cast<byte, float>(new Span<byte>(buff));
+                        if (!errorCode.Equals(ErrorCode.Overflow))
+                            ExampleUsePlanDirectly(new float[0], shortBuffer, _rxStreams[sdrNumber], numberOfSamples);
+                        streamResult.Dispose();
+                    }
+                    if (format.Equals(StreamFormat.ComplexFloat32))
+                    {
+                        // if (_rxStreams[sdrNumber].Format.Equals(StreamFormat.ComplexInt16))
+                        // {
+                        //     // Disable 16bit stream and start a 32bit one
+                        //     _rxStreams[sdrNumber].Deactivate();
+                        //     _rxStreams[sdrNumber] = sdr.SetupRxStream(format, channels, "bitpack=true");
+                        //     _rxStreams[sdrNumber].Activate(); 
+                        // }
+                        floatBuffer = new float[MTU * formatSize];
+                        var errorCode = _rxStreams[sdrNumber].Read(ref floatBuffer, 100000, out streamResult);
+                        if (selectedSDR.Equals("Airspy") && errorCode.Equals(ErrorCode.Overflow))
+                            errorCode = _rxStreams[sdrNumber].Read(ref floatBuffer, 100000, out streamResult);
+                        listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Error code:     " + errorCode);
+                        comboBox2.Enabled = false;
 
-                    // var expectedSamps = Math.Min(_rxStreams[sdrNumber].MTU, (n - totalSamps));
-                    // for (int i = 0; i < n; i++)
-                    // {
-                    //     StreamResult streamResult;
-                    //
-                    //     // var bufferSlice = floatSpan.Slice((int)totalSamps, (int)expectedSamps);
-                    //     var errorCode = _rxStreams[sdrNumber].Read(ref buff, 10000, out streamResult);
-                    //     listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Error code:     " + errorCode);
-                    //     listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Receive flags:  " + streamResult.Flags);
-                    //
-                    //     if (errorCode == ErrorCode.None)
-                    //     {
-                    //         for (var index = 0; index < 10; index++)
-                    //         {
-                    //             var VARIABLE = buff[index];
-                    //             listBox1.Items.Add(VARIABLE);
-                    //         }
-                    //     }
-                    //     
-                    //     // listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Timestamp (ns):  " + streamResult.TimeNs);
-                    // }
-
-                    // totalSamps += FFT_SIZE;
-                    //
-                    // if(bufferSlice.Length > 0) listBox1.Items.Add(bufferSlice[0]);
-
-                    // ExampleUsePlanDirectly((int)FFT_SIZE, streamResult, n);
+                        if (!errorCode.Equals(ErrorCode.Overflow))
+                            ExampleUsePlanDirectly(floatBuffer, new short[0], _rxStreams[sdrNumber], numberOfSamples, true);
+                        streamResult.Dispose();
+                    }
                 }
 
                 sdrNumber++;
@@ -340,11 +365,12 @@ namespace SoapySDRFFTGUI
             Restore_Window_Location();
         }
 
-        private void ExampleUsePlanDirectly(float[] buffer, decimal numSamps, RxStream rxStream)
+        private void ExampleUsePlanDirectly(float[] floatBuffer,short[] shortBuffer, RxStream rxStream, decimal numSamps, bool floats = false)
         {
             // Use the same arrays for as many transformations as you like.
             // If you can use the same arrays for your transformations, this is faster than calling DFT.FFT / DFT.IFFT
-
+            // TODO: This is a combo of rtl_map and eshail-ghy-wb-fft-airspy from BATC, regarding data transforms.
+            //     : this might be inaccurate 
             _fftwArrayIn = new FftwArrayComplex((int)(FFT_SIZE * numSamps));
             _fftwArrayOut = new FftwArrayComplex((int)(FFT_SIZE * numSamps));
             FftwArrayComplex pt = new FftwArrayComplex((int)(FFT_SIZE * numSamps));
@@ -353,10 +379,12 @@ namespace SoapySDRFFTGUI
             double pwr, lpwr;
             double[] fft_buffer = new double[FFT_SIZE];
             int cnt = 0;
-            float db;
-            float amp;
+            double amp, db;
+            // float amp, db;
             int out_r;
             int out_i;
+            var strb = new StringBuilder();
+            var chunks = 10_000_000 / FFT_SIZE;
             while (cnt < (int)(rxStream.MTU / FFT_SIZE))
             {
                 int offset;
@@ -365,7 +393,10 @@ namespace SoapySDRFFTGUI
                 /* Copy data out of rf buffer into fft_input buffer */
                 for (var i = 0; i < FFT_SIZE; i++)
                 {
-                    _fftwArrayIn[i] = buffer[offset + (2 * i)] * hanning_window_const[i];
+                    // Real ?
+                    if(floats) _fftwArrayIn[i] = floatBuffer[offset + (2 * i)] * hanning_window_const[i];
+                    if(!floats) _fftwArrayIn[i] = shortBuffer[offset + (2 * i)] * hanning_window_const[i];
+                    // Imaginary ?
                     // _fftwArrayIn[i][1] = buffer[offset+(2*i)+1] * hanning_window_const[i];
                 }
 
@@ -402,70 +433,30 @@ namespace SoapySDRFFTGUI
                 //     fft_buffer[i] = (lpwr * (one - FFT_TIME_SMOOTH)) + (fft_buffer[i] * FFT_TIME_SMOOTH);
                 // }
 
-                var strb = new StringBuilder();
+
                 // foreach (var VARIABLE in fft_buffer)
                 // {
                 //     strb.Append($" - {VARIABLE}");
                 // }
 
-                
+
                 for (int i = 0; i < FFT_SIZE; i++)
                 {
-                
-                    out_r = (int)(_fftwArrayOut[i].Real * _fftwArrayOut[i].Real);
-                    out_i = (int)(_fftwArrayOut[i].Imaginary * _fftwArrayOut[i].Imaginary);
-                    amp = (float)Math.Sqrt(out_r + out_i);
-                    db = (float)(10 * Math.Log10(amp));
-                    strb.Append($"{db}, {amp}");
+                    // out_r = (int)(_fftwArrayOut[i].Real * _fftwArrayOut[i].Real);
+                    // out_i = (int)(_fftwArrayOut[i].Imaginary * _fftwArrayOut[i].Imaginary);
+                    // amp = (float)Math.Sqrt(out_r + out_i);
+                    // db = (float)(10 * Math.Log10(amp));
+                    amp = _fftwArrayOut[i].Phase;
+                    db = _fftwArrayOut[i].Magnitude;
+                    if(cnt == 62)
+                        strb.Append($"[{db}|{amp}], ");
                 }
-                listBox1.Items.Add(strb);
             }
 
-            // Create(timeDomain, temp, DftDirection.Forwards)
-            // if (rfstream.NumSamples > 0)
-            // {
-            //     
-            //     // listBox1.Items.Add((int)rfstream.NumSamples);
-            //     using (var timeDomain = new FftwArrayComplex(fftSize))
-            //     using (var frequencyDomain = new FftwArrayComplex((int)rfstream.NumSamples))
-            //     {
-            //         var cnt = (int)rfstream.NumSamples / fftSize;
-            //         for (var j = 0; j < cnt; j++)
-            //         {
-            //             listBox1.Items.Add(j);
-            //             IPinnedArray<Complex> temp = new FftwArrayComplex(fftSize);
-            //             var notOne = j > 0 ? j * fftSize : j;
-            //             frequencyDomain.CopyTo(temp, notOne, notOne , fftSize);
-            //             using (var fft = FftwPlanC2C.Create(timeDomain, temp, DftDirection.Forwards))
-            //             using (var ifft = FftwPlanC2C.Create(temp, timeDomain, DftDirection.Backwards))
-            //             {
-            //                 // Set the input after the plan was created as the input may be overwritten
-            //                 // during planning
-            //                 for (int i = 0; i < timeDomain.Length; i++)
-            //                     timeDomain[i] = i % 10;
-            //
-            //                 // timeDomain -> frequencyDomain
-            //                 fft.Execute();
-            //                 for (var index = 0; index < fft.Output.Length; index++)
-            //                 {
-            //                     var VARIABLE = fft.Output[index];
-            //                     listBox1.Items.Add(VARIABLE);
-            //                 }
-            //                 // listBox1.Items.Add(timeDomain.GetSize());
-            //
-            //                 // for (int i = frequencyDomain.Length / 2; i < frequencyDomain.Length; i++)
-            //                 //     frequencyDomain[i] = 0;
-            //                 //
-            //                 // // frequencyDomain -> timeDomain
-            //                 // ifft.Execute();
-            //
-            //                 // Do as many forwards and backwards transformations here as you like
-            //             }
-            //         }
-            //         
-            //     }
-            //     
-            // }
+            var buffLen = floats ? floatBuffer.Length : shortBuffer.Length;
+            listBox1.Items.Add($" Chunks of {FFT_SIZE} FFT:  {cnt} x {chunks/1_000f} kHz");
+            listBox1.Items.Add($" Buffer length:  {buffLen}");
+            Logger.Log(LogLevel.Info, $"{strb}");
         }
 
 
@@ -534,6 +525,21 @@ namespace SoapySDRFFTGUI
             {
                 Location = Properties.Settings.Default.Location;
                 Size = Properties.Settings.Default.Size;
+            }
+        }
+
+        private void comboBox2_Click(object sender, EventArgs e)
+        {
+            var selectedSDR = comboBox1.SelectedItem;
+            var sdrNumber = 0;
+            foreach (var sdr in SDRs)
+            {
+                if (sdr.DriverKey.Equals(selectedSDR))
+                {
+                    // TODO: do something here ... 
+                    // sdr.SetupRxStream();
+                    
+                }
             }
         }
     }
