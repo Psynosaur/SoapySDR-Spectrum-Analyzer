@@ -6,7 +6,7 @@ namespace SoapySDRFFTGUI.Classes;
 
 public static class ColorChanger
 {
-    private static Color _darkTheme = Color.FromArgb(43,43,43);
+    private static Color _darkTheme = Color.FromArgb(69,69,69);
     private static Color _textColor = Color.FromArgb(113, 194, 87);
 
     public static void ChangeControlColors(Form form)

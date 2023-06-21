@@ -63,14 +63,14 @@ namespace SoapySDRFFTGUI
         }
         void anotherFFT(byte[] buffer)
         {
-            radioValues = new double[buffer.Length];
-            int bytesPerSamplePerChannel = 2;
+            radioValues = new double[buffer.Length / 4];
+            int bytesPerSamplePerChannel = 4;
             int bytesPerSample = bytesPerSamplePerChannel;
             int bufferSampleCount = buffer.Length / bytesPerSample;
 
             for (int i = 0; i < bufferSampleCount -1; i++)
             {
-                var dataPoint = BitConverter.ToInt16(buffer, i * bytesPerSample);
+                var dataPoint = BitConverter.ToUInt32(buffer, i * bytesPerSample);
                 radioValues[i] = dataPoint < 0 ? 0 : dataPoint;
             }
                 
@@ -104,7 +104,7 @@ namespace SoapySDRFFTGUI
             // request a redraw using a non-blocking render queue
             formsPlot1.Plot.Clear();
             formsPlot1.Plot.AddSignal(FftValues, 1);
-            formsPlot1.Plot.SetAxisLimits(20000, 60000, 0, 30);
+            //formsPlot1.Plot.SetAxisLimits(20000, 60000, 0, 30);
             formsPlot1.RefreshRequest();
 
         }
@@ -453,7 +453,13 @@ namespace SoapySDRFFTGUI
                         comboBox2.Enabled = false;
 
                         if (errorCode.Equals(ErrorCode.None))
-                            Data_To_FFT(floatBuffer, new short[0], sdr, _rxStreams[sdrNumber], numberOfSamples, true);
+                        {
+                            //Data_To_FFT(floatBuffer, new short[0], sdr, _rxStreams[sdrNumber], numberOfSamples, true);
+                            var halfData = floatBuffer.Take(floatBuffer.Length / 2).ToArray();
+                            Span<byte> byteSpan = MemoryMarshal.Cast<float, byte>(new Span<float>(halfData));
+                            anotherFFT(byteSpan.ToArray());
+
+                        }
                         streamResult.Dispose();
                     }
 
@@ -946,7 +952,7 @@ namespace SoapySDRFFTGUI
                     var freqRange = sdr.GetFrequencyRange(Direction.Rx, 0);
                     foreach (var freq in freqRange)
                     {
-                        numericUpDown1.Increment = 1000000;
+                        //numericUpDown1.Increment = 1000000;
                         numericUpDown1.Minimum = (decimal)freq.Minimum;
                         numericUpDown1.Maximum = (decimal)freq.Maximum;
                         numericUpDown1.Value = (decimal)qo100CenterFreq;
@@ -970,7 +976,7 @@ namespace SoapySDRFFTGUI
                     var freqRange = sdr.GetFrequencyRange(Direction.Rx, 0);
                     foreach (var freq in freqRange)
                     {
-                        numericUpDown1.Increment = 1000000;
+                        //numericUpDown1.Increment = 1000000;
                         numericUpDown1.Minimum = (decimal)freq.Minimum;
                         numericUpDown1.Maximum = (decimal)freq.Maximum;
                         numericUpDown1.Value = centerFreq.Value;

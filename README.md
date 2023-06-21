@@ -28,5 +28,11 @@ SoapySDR FFT viewer(in progress)
       - Network address box
       - Auto discovery?
     - [x] Connect to RX stream 
-    - Draw spectrum window 
+    - [x] Draw spectrum window 
+      - [ ] Make te spectrum unmirrored 
+        - [ ] transform the data correctly
+    - [ ] Sort out bugs
+      - [ ] RTLSDR close
+      - [ ] RTLSDR params not correctly set
+      - [ ] Some gui things
   - More to come . . .

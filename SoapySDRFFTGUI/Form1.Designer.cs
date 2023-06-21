@@ -144,7 +144,7 @@ namespace SoapySDRFFTGUI
             // numericUpDown1
             // 
             this.numericUpDown1.Increment = new decimal(new int[] {
-            1000000,
+            500000,
             0,
             0,
             0});
