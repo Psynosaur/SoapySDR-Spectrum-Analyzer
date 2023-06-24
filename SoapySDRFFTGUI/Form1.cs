@@ -33,10 +33,12 @@ namespace SoapySDRFFTGUI
 
         private double[] hanning_window_const = new double[FFT_SIZE];
         private double qo100CenterFreq = 745.5e6;
-        
+
         private double[] radioValues;
 
         private double[] FftValues;
+
+        private int DrawCnt = 0;
 
         Graphics tmp;
         Pen greyPen = new Pen(Color.Green);
@@ -53,70 +55,14 @@ namespace SoapySDRFFTGUI
             EnumerateSDRs();
             bmp = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             tmp = Graphics.FromImage(bmp);
-           
+
             formsPlot1.Plot.YLabel("Spectral Power dB");
             formsPlot1.Plot.XLabel("Frequency (MHz)");
             formsPlot1.Plot.Title($"QO-100 Spectrum");
             formsPlot1.Plot.SetAxisLimits(740.5, 750.5, -30, 30);
             formsPlot1.Refresh();
-
-        }
-        void anotherFFT(byte[] buffer)
-        {
-            radioValues = new double[buffer.Length / 4];
-            int bytesPerSamplePerChannel = 4;
-            int bytesPerSample = bytesPerSamplePerChannel;
-            int bufferSampleCount = buffer.Length / bytesPerSample;
-
-            for (int i = 0; i < bufferSampleCount -1; i++)
-            {
-                var dataPoint = BitConverter.ToUInt32(buffer, i * bytesPerSample);
-                radioValues[i] = dataPoint < 0 ? 0 : dataPoint;
-            }
-                
-
-            double[] paddedSignal = FftSharp.Pad.ZeroPad(radioValues);
-            System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(paddedSignal);
-            double[] fftMag = FftSharp.FFT.Power(spectrum, positiveOnly: true);
-            //double[] freq = FftSharp.FFT.FrequencyScale(fftMag.Length, 5_000_000);
-            //double[] fftMag = FftSharp.Transform.FFTpower(paddedAudio);
-            FftValues = new double[fftMag.Length];
-            var window = new FftSharp.Windows.Hanning();
-            double[] windowed = window.Apply(fftMag);
-            //System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(radioValues);
-            //double[] psd = FftSharp.FFT.Power(spectrum);
-            //double[] freq = FftSharp.FFT.FrequencyScale(psd.Length, 5_000_000);
-            //formsPlot1.Plot.AddScatterLines(freq, psd);
-
-            Array.Copy(fftMag, FftValues, fftMag.Length);
-
-            // find the frequency peak
-            //int peakIndex = 0;
-            //for (int i = 0; i < fftMag.Length; i++)
-            //{
-            //    if (fftMag[i] > fftMag[peakIndex])
-            //        peakIndex = i;
-            //}
-            //double fftPeriod = FftSharp.Transform.FFTfreqPeriod(10, fftMag.Length);
-            //double peakFrequency = fftPeriod * peakIndex;
-            //label3.Text = $"Peak Frequency: {peakFrequency:N0} Hz";
-
-            // request a redraw using a non-blocking render queue
-            formsPlot1.Plot.Clear();
-            formsPlot1.Plot.AddSignal(FftValues, 1);
-            //formsPlot1.Plot.SetAxisLimits(20000, 60000, 0, 30);
-            formsPlot1.RefreshRequest();
-
         }
 
-
-        private void SetupHanningWindowArray()
-        {
-            for (var i = 0; i < FFT_SIZE; i++)
-            {
-                hanning_window_const[i] = 0.5 * (1.0 - Math.Cos(2 * Math.PI * (((double)i) / FFT_SIZE)));
-            }
-        }
 
         private void trackBar1_Scroll(object sender, EventArgs e)
         {
@@ -304,16 +250,17 @@ namespace SoapySDRFFTGUI
                 Device sdr = new Device(args);
                 var sampleRate = sdr.DriverKey.Equals("RTLSDR") ? 2.4e06 : 10e06;
                 //if (sdr.DriverKey.Equals("RTLSDR")) args = "offset_tune=true";
-                if (sdr.DriverKey.Equals("RTLSDR")) sdr.WriteSetting("offset_tune", "true");
+                // if (sdr.DriverKey.Equals("Airspy")) sdr.WriteSetting("bitpack", "true");
+                //
+                // if (sdr.DriverKey.Equals("RTLSDR")) sdr.WriteSetting("offset_tune", "true");
                 //if (sdr.DriverKey.Equals("Airspy")) args = "bitpack=true"; 
-                if (sdr.DriverKey.Equals("Airspy")) sdr.WriteSetting("bitpack", "true");
                 sdr.SetSampleRate(Direction.Rx, 0, sampleRate);
                 sdr.SetFrequency(Direction.Rx, 0, qo100CenterFreq);
                 if (sdr.DriverKey.Equals("Airspy"))
                 {
                     // var val = sdr.GetGainRange(Direction.Rx, 0).Maximum * 0.7;
-                    sdr.SetGain(Direction.Rx, 0, "LNA", 9);
-                    sdr.SetGain(Direction.Rx, 0, "MIX", 9);
+                    sdr.SetGain(Direction.Rx, 0, "LNA", 11);
+                    sdr.SetGain(Direction.Rx, 0, "MIX", 11);
                     sdr.SetGain(Direction.Rx, 0, "VGA", 9);
                 }
 
@@ -331,7 +278,7 @@ namespace SoapySDRFFTGUI
                 {
                     firstSDR = true;
                     comboBox1.SelectedItem = sdr.DriverKey;
-                    comboBox2.SelectedItem = sdr.GetNativeStreamFormat(Direction.Rx, 0, out _);;
+                    comboBox2.SelectedItem = sdr.GetNativeStreamFormat(Direction.Rx, 0, out _);
                 }
 
 
@@ -363,7 +310,7 @@ namespace SoapySDRFFTGUI
                     //if (sdr.DriverKey.Equals("RTLSDR")) sdr.WriteSetting("offset_tune", "true");
                     //if (sdr.DriverKey.Equals("Airspy")) args = "bitpack=true"; 
                     //if (sdr.DriverKey.Equals("Airspy")) sdr.WriteSetting("bitpack", "true");
-                    
+
                     var m = 1_000_000;
 
                     var format = comboBox2.SelectedItem.ToString();
@@ -390,17 +337,17 @@ namespace SoapySDRFFTGUI
                     listBox1.Items.Add($"setting{sdr.ReadSetting("bitpack")} ");
                     uint numberOfSamples = 1;
                     listBox1.Items.Add(
-                        $"Reading {numberOfSamples} samples, at {sampleRate / m} MSPS at {qo100CenterFreq / m} MHz");
+                        $"Reading {numberOfSamples} samples, at {sampleRate / m} MSPS at { numericUpDown1.Value / m} MHz");
                     listBox1.Items.Add($"Format {format} -> {formatSize} bytes * {MTU} bytes (MTU)");
                     if (format.Equals(StreamFormat.ComplexInt16))
                     {
-                        // if (_rxStreams[sdrNumber].Format.Equals(StreamFormat.ComplexFloat32))
-                        // {
-                        //     // Disable 16bit stream and start a 32bit one
-                        //     _rxStreams[sdrNumber].Deactivate();
-                        //     _rxStreams[sdrNumber] = sdr.SetupRxStream(format, channels, "bitpack=true");
-                        //     _rxStreams[sdrNumber].Activate(); 
-                        // }
+                        if (!_rxStreams[sdrNumber].Format.Equals(StreamFormat.ComplexInt16))
+                        {
+                            // Disable 16bit stream and start a 32bit one
+                            _rxStreams[sdrNumber].Deactivate();
+                            _rxStreams[sdrNumber] = sdr.SetupRxStream(format, channels, "");
+                            _rxStreams[sdrNumber].Activate(); 
+                        }
                         shortBuffer = new short[MTU * 2];
                         var errorCode = _rxStreams[sdrNumber].Read(ref shortBuffer, 100000, out streamResult);
                         while (errorCode.Equals(ErrorCode.Overflow))
@@ -411,14 +358,13 @@ namespace SoapySDRFFTGUI
                         listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Short buffer size:     " +
                                            shortBuffer.Length);
 
-                        comboBox2.Enabled = false;
-                        Complex[] transformedValues = new Complex[shortBuffer.Length]; 
-                        double largestMagnitude = 0;        //Stores the largest magnitude that has been found 
-                        int biggestMagIndex = 0; 
+                        // comboBox2.Enabled = false;
+                        Complex[] transformedValues = new Complex[shortBuffer.Length];
+                        double largestMagnitude = 0; //Stores the largest magnitude that has been found 
+                        int biggestMagIndex = 0;
                         if (errorCode.Equals(ErrorCode.None))
                         {
-                            var halfData = shortBuffer.Take(shortBuffer.Length / 2).ToArray();
-                            Span<byte> byteSpan = MemoryMarshal.Cast<short, byte>(new Span<short>(halfData));
+                            Span<byte> byteSpan = MemoryMarshal.Cast<short, byte>(new Span<short>(shortBuffer));
                             anotherFFT(byteSpan.ToArray());
                             //Data_To_FFT(new float[0], shortBuffer, sdr, _rxStreams[sdrNumber], numberOfSamples);
                             //transformedValues = fft(shortBuffer);
@@ -434,13 +380,13 @@ namespace SoapySDRFFTGUI
 
                     if (format.Equals(StreamFormat.ComplexFloat32))
                     {
-                        // if (_rxStreams[sdrNumber].Format.Equals(StreamFormat.ComplexInt16))
-                        // {
-                        //     // Disable 16bit stream and start a 32bit one
-                        //     _rxStreams[sdrNumber].Deactivate();
-                        //     _rxStreams[sdrNumber] = sdr.SetupRxStream(format, channels, "bitpack=true");
-                        //     _rxStreams[sdrNumber].Activate(); 
-                        // }
+                        if (!_rxStreams[sdrNumber].Format.Equals(StreamFormat.ComplexFloat32))
+                        {
+                            // Disable 16bit stream and start a 32bit one
+                            _rxStreams[sdrNumber].Deactivate();
+                            _rxStreams[sdrNumber] = sdr.SetupRxStream(format, channels, "");
+                            _rxStreams[sdrNumber].Activate(); 
+                        }
                         floatBuffer = new float[MTU * 2];
                         var errorCode = _rxStreams[sdrNumber].Read(ref floatBuffer, 100000, out streamResult);
                         while (errorCode.Equals(ErrorCode.Overflow))
@@ -450,16 +396,25 @@ namespace SoapySDRFFTGUI
                                            streamResult.NumSamples);
                         listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Float buffer size:     " +
                                            floatBuffer.Length);
-                        comboBox2.Enabled = false;
+                        // comboBox2.Enabled = false;
 
                         if (errorCode.Equals(ErrorCode.None))
                         {
                             //Data_To_FFT(floatBuffer, new short[0], sdr, _rxStreams[sdrNumber], numberOfSamples, true);
-                            var halfData = floatBuffer.Take(floatBuffer.Length / 2).ToArray();
-                            Span<byte> byteSpan = MemoryMarshal.Cast<float, byte>(new Span<float>(halfData));
-                            anotherFFT(byteSpan.ToArray());
+                            var indexesOfZeros = new List<int>();
 
+                            for (var index = 0; index < floatBuffer.Length; index++)
+                            {
+                                var flt = floatBuffer[index];
+                                if (flt == 0)
+                                {
+                                    indexesOfZeros.Add(index);
+                                }
+                            }
+
+                            anotherFFT(new byte[0], floatBuffer);
                         }
+
                         streamResult.Dispose();
                     }
 
@@ -480,7 +435,148 @@ namespace SoapySDRFFTGUI
             Restore_Window_Location();
         }
 
+        void anotherFFT(byte[] buffer, float[] floatBuf = null)
+        {
+            var selectedSdr = comboBox1.SelectedItem;
+            double sampleRate = 0;
+            foreach (var sdr in SDRs)
+                if (sdr.DriverKey.Equals(selectedSdr))
+                    sampleRate = sdr.GetSampleRate(Direction.Rx, 0);
+
+            int bytesPerSample = (int)numericUpDown3.Value;
+           
+            var chunkInHz = sampleRate / FFT_SIZE;
+            var chunkInKHz = sampleRate / FFT_SIZE / 1_000f;
+
+            radioValues = new double[buffer.Length / bytesPerSample];
+            int bufferSampleCount;
+            
+            if (floatBuf is not null)
+            {
+                bufferSampleCount = floatBuf.Length / bytesPerSample;
+                radioValues = new double[floatBuf.Length / bytesPerSample];
+                for (int i = 0; i < bufferSampleCount - 1; i++)
+                {
+                    radioValues[i] = BitConverter.ToUInt32(BitConverter.GetBytes(floatBuf[i * bytesPerSample]), 0);
+                }
+            }
+
+            if (buffer.Length > 0)
+            {
+                bufferSampleCount =  buffer.Length / bytesPerSample;
+                for (int i = 0 ; i < bufferSampleCount - 1; i++)
+                {
+                    radioValues[i] = BitConverter.ToUInt16(buffer, i * bytesPerSample);;
+                }
+            }
+            
+
+
+            double[] paddedSignal = FftSharp.Pad.ZeroPad(radioValues);
+            System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(paddedSignal);
+            var freqScale = FftSharp.FFT.FrequencyResolution(spectrum.Length, bytesPerSample );
+            double[] fftMag = FftSharp.FFT.Power(spectrum);
+            //double[] freq = FftSharp.FFT.FrequencyScale(fftMag.Length, 5_000_000);
+            //double[] fftMag = FftSharp.Transform.FFTpower(paddedAudio);
+            FftValues = new double[fftMag.Length - 1];
+            var window = new FftSharp.Windows.Cosine();
+            double[] windowed = window.Apply(fftMag);
+            //System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(radioValues);
+            //double[] psd = FftSharp.FFT.Power(spectrum);
+            //double[] freq = FftSharp.FFT.FrequencyScale(psd.Length, 5_000_000);
+            //formsPlot1.Plot.AddScatterLines(freq, psd);
+            var tempArray = fftMag.Skip(1).ToArray();
+
+            Array.Copy(tempArray, FftValues, tempArray.Length);
+
+            // find the frequency peak
+            //int peakIndex = 0;
+            //for (int i = 0; i < fftMag.Length; i++)
+            //{
+            //    if (fftMag[i] > fftMag[peakIndex])
+            //        peakIndex = i;
+            //}
+            //double fftPeriod = FftSharp.Transform.FFTfreqPeriod(10, fftMag.Length);
+            //double peakFrequency = fftPeriod * peakIndex;
+            //label3.Text = $"Peak Frequency: {peakFrequency:N0} Hz";
+
+            // request a redraw using a non-blocking render queue
+            for (int i = 0; i < 10; i++)
+            {
+            }
+
+            
+            if (DrawCnt < 10) DrawCnt += 1;
+            if (DrawCnt == 10)
+            {
+                DrawCnt = 0;
+                formsPlot1.Plot.Clear();
+            }
+            
+            var buffLen = FftValues.Length;
+            var centerFreq = (double) numericUpDown1.Value;
+            listBox1.Items.Add($" Centre Freq {centerFreq} Hz ");
+            var startFreq = (centerFreq - FFT_SIZE / 2 * chunkInHz) / 1000000f;
+            var stopFreq = (centerFreq + FFT_SIZE / 2 * chunkInHz) / 1000000f;
+            listBox1.Items.Add($" Each FFT point is {chunkInKHz} kHz wide ");
+            listBox1.Items.Add($" Chunks of {FFT_SIZE} FFT:  {1}");
+            listBox1.Items.Add($" Buffer length:  {buffLen}");
+            listBox1.Items.Add($" Start Frequency :  {startFreq} MHz");
+            listBox1.Items.Add($" Stop Frequency :  {stopFreq} MHz");
+
+            var highLow = GetMinMax(FftValues);
+            formsPlot1.Plot.SetAxisLimits(0, FftValues.Length / bytesPerSample, highLow.Max -30,highLow.Max + 10 );
+            formsPlot1.Plot.AddSignal(FftValues, (double)numericUpDown3.Value);
+            formsPlot1.RefreshRequest();
+        }
         
+        public class MinMax
+        {
+            public double Min;
+            public double Max;
+
+            public MinMax(double min, double max)
+            {
+                Min = min;
+                Max = max;
+            }
+        }
+        
+        public MinMax GetMinMax(double[] sourceArray)
+        {
+            var minMax = new MinMax(sourceArray[0], sourceArray[0]);
+            for (int index = 1; index < sourceArray.Length; index++)
+            {
+                if (sourceArray[index] > minMax.Max)
+                    minMax.Max = sourceArray[index];
+                if (sourceArray[index] < minMax.Min) {
+                    minMax.Min = sourceArray[index];
+                }
+            }
+            return minMax;
+        }
+        
+        public double GetSmallestElement(double[] sourceArray)
+        {
+            double maxElement = sourceArray[0];
+            for (int index = 1; index < sourceArray.Length; index++)
+            {
+                if (sourceArray[index] > maxElement)
+                    maxElement = sourceArray[index];
+            }
+            return maxElement;
+        }
+
+
+        private void SetupHanningWindowArray()
+        {
+            for (var i = 0; i < FFT_SIZE; i++)
+            {
+                hanning_window_const[i] = 0.5 * (1.0 - Math.Cos(2 * Math.PI * (((double)i) / FFT_SIZE)));
+            }
+        }
+
+
         private Complex[] fft(short[] inputArr)
         {
             Complex[]
@@ -510,47 +606,55 @@ namespace SoapySDRFFTGUI
             return outputComp;
         }
 
-        void drawMagnitudeGraph(Complex[] output, int biggestMag )
+        void drawMagnitudeGraph(Complex[] output, int biggestMag)
         {
             pictureBox1.Image = null;
             Pen plotter = new Pen(Brushes.Gainsboro);
-            for (int i = 0; i < output.Length/2; i++) {
-                using (Graphics g = pictureBox1.CreateGraphics()) {
-                    g.DrawEllipse(plotter, i/2, 500-Convert.ToSingle(output[i].Magnitude)*(500/Convert.ToSingle(biggestMag)), 4, 4);
+            for (int i = 0; i < output.Length / 2; i++)
+            {
+                using (Graphics g = pictureBox1.CreateGraphics())
+                {
+                    g.DrawEllipse(plotter, i / 2,
+                        500 - Convert.ToSingle(output[i].Magnitude) * (500 / Convert.ToSingle(biggestMag)), 4, 4);
                 }
             }
         }
+
         void drawTimeGraph(short[] inBuffer)
         {
             pictureBox1.Image = null;
             Graphics g = pictureBox1.CreateGraphics();
-            
+
             Pen plotter = new Pen(Brushes.Gainsboro);
-            
+
             for (int i = 0; i < inBuffer.Length; i++)
             {
                 g.DrawEllipse(plotter, i, 255 - (Convert.ToInt32(inBuffer[i]) / 128), 5, 5);
             }
-        
-           
+
+
             // pictureBox1.Image = g.DrawImage(new Rectangle(0, 0, pictureBox1.Width,pictureBox1.Height));
         }
 
         void drawBuff(short[] inAudio)
         {
-            using (Bitmap drawnPic = new Bitmap(pictureBox1.Width, pictureBox1.Height)) {
-
+            using (Bitmap drawnPic = new Bitmap(pictureBox1.Width, pictureBox1.Height))
+            {
                 //Draw the pixel black
-                for (int i = 0; i <inAudio.Length; i++) {
+                for (int i = 0; i < inAudio.Length; i++)
+                {
                     short val = inAudio[i];
                     //drawnPic.SetPixel((i/(inAudio.Length/drawnPic.Width)), (drawnPic.Height / 2) - (inAudio[i]/(65550 / (drawnPic.Height)))-1, Color.Black);
-                    drawnPic.SetPixel((i / (inAudio.Length / drawnPic.Width)), (drawnPic.Height / 2) - (inAudio[i]>>8)*2 - 1, Color.Black);
+                    drawnPic.SetPixel((i / (inAudio.Length / drawnPic.Width)),
+                        (drawnPic.Height / 2) - (inAudio[i] >> 8) * 2 - 1, Color.Black);
                 }
+
                 drawnPic.SetPixel(512, 256, Color.Black);
-                pictureBox1.Image = drawnPic.Clone(new Rectangle(0, 0, drawnPic.Width, drawnPic.Height), System.Drawing.Imaging.PixelFormat.DontCare);
+                pictureBox1.Image = drawnPic.Clone(new Rectangle(0, 0, drawnPic.Width, drawnPic.Height),
+                    System.Drawing.Imaging.PixelFormat.DontCare);
             }
         }
-        
+
         void drawTimeGraphDouble(double[] inBuffer)
         {
             pictureBox1.Image = null;
@@ -582,7 +686,7 @@ namespace SoapySDRFFTGUI
             float FFT_TIME_SMOOTH = 0.9995f;
             double pwr_scale = 1.0 / (float)(FFT_SIZE * FFT_SIZE);
             double pwr, lpwr;
-           
+
             int cnt = 0;
             double amp, db;
             // float amp, db;
@@ -593,8 +697,8 @@ namespace SoapySDRFFTGUI
             var chunkInKHz = sampleRate / FFT_SIZE / 1_000f;
             var magnitudeArray = new double[FFT_SIZE];
             var bufferSize = floats ? floatBuffer.Length : shortBuffer.Length;
-            float[] fft_buffer = new float[bufferSize/2];
-            while (cnt < (int)( bufferSize/2 / FFT_SIZE / 2) - 1)
+            float[] fft_buffer = new float[bufferSize / 2];
+            while (cnt < (int)(bufferSize / 2 / FFT_SIZE / 2) - 1)
             {
                 int offset;
                 offset = (int)((cnt * FFT_SIZE * 2) / 2);
@@ -623,7 +727,7 @@ namespace SoapySDRFFTGUI
                 fft.Execute();
                 //for (int i = _fftwArrayOut.Length / 2; i < _fftwArrayOut.Length; i++)
                 //    _fftwArrayOut[i] = 0;
-                
+
                 for (var i = 0; i < FFT_SIZE; i++)
                 {
                     /* shift, normalize and convert to dBFS */
@@ -641,7 +745,8 @@ namespace SoapySDRFFTGUI
                     pwr = pwr_scale * (pt[0].Real * pt[0].Real) + (pt[1].Imaginary * pt[1].Imaginary);
                     lpwr = 10f * Math.Log10(pwr + 1.0e-20);
 
-                    fft_buffer[i * cnt] = (float)((lpwr * (1f - FFT_TIME_SMOOTH)) + (fft_buffer[i * cnt] * FFT_TIME_SMOOTH));
+                    fft_buffer[i * cnt] =
+                        (float)((lpwr * (1f - FFT_TIME_SMOOTH)) + (fft_buffer[i * cnt] * FFT_TIME_SMOOTH));
                 }
 
 
@@ -705,14 +810,14 @@ namespace SoapySDRFFTGUI
                 // during planning
                 for (int i = 0; i < timeDomain.Length; i++)
                     timeDomain[i] = i % 10;
-            
+
                 // timeDomain -> frequencyDomain
                 fft.Execute();
                 listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Buffer size: {buffer.Length}");
 
                 for (int i = frequencyDomain.Length / 2; i < frequencyDomain.Length; i++)
                     frequencyDomain[i] = 0;
-                
+
                 // frequencyDomain -> timeDomain
                 ifft.Execute();
                 double[] fftValues = new double[buffer.Length];
@@ -720,6 +825,7 @@ namespace SoapySDRFFTGUI
                 {
                     fftValues[index] = ifft.Output[index].Magnitude;
                 }
+
                 // Do as many forwards and backwards transformations here as you like
                 // drawTimeGraph(buffer.ToArray());
                 formsPlot1.Plot.AddSignal(fftValues, 10);
@@ -958,7 +1064,7 @@ namespace SoapySDRFFTGUI
                         numericUpDown1.Value = (decimal)qo100CenterFreq;
                     }
 
-                   var formats = sdr.GetStreamFormats(Direction.Rx, 0);
+                    var formats = sdr.GetStreamFormats(Direction.Rx, 0);
                     foreach (var format in formats) comboBox2.Items.Add(format);
                     comboBox2.SelectedItem = nativeStreamFormat;
                 }
@@ -970,23 +1076,14 @@ namespace SoapySDRFFTGUI
             numericUpDown1.Value = centerFreq.Value;
             var selectedSdr = comboBox1.SelectedItem;
             foreach (var sdr in SDRs)
-            {
                 if (sdr.DriverKey.Equals(selectedSdr))
-                {
-                    var freqRange = sdr.GetFrequencyRange(Direction.Rx, 0);
-                    foreach (var freq in freqRange)
-                    {
-                        //numericUpDown1.Increment = 1000000;
-                        numericUpDown1.Minimum = (decimal)freq.Minimum;
-                        numericUpDown1.Maximum = (decimal)freq.Maximum;
-                        numericUpDown1.Value = centerFreq.Value;
-                    }
                     sdr.SetFrequency(Direction.Rx, 0, (double)centerFreq.Value);
-                }
-                
-            }
-
         }
 
+        private void button3_Click(object sender, EventArgs e)
+        {
+            formsPlot1.Plot.Clear();
+            formsPlot1.RefreshRequest();
+        }
     }
 }

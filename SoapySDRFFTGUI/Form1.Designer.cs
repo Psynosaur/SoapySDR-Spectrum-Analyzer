@@ -39,12 +39,17 @@ namespace SoapySDRFFTGUI
             this.button2 = new System.Windows.Forms.Button();
             this.comboBox2 = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.formsPlot1 = new ScottPlot.FormsPlot();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.numericUpDown2 = new System.Windows.Forms.NumericUpDown();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.numericUpDown3 = new System.Windows.Forms.NumericUpDown();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.button3 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown3)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // comboBox1
@@ -117,23 +122,6 @@ namespace SoapySDRFFTGUI
             this.label2.TabIndex = 6;
             this.label2.Text = "Stream Formats";
             // 
-            // label3
-            // 
-            this.label3.Location = new System.Drawing.Point(255, 33);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(75, 21);
-            this.label3.TabIndex = 8;
-            this.label3.Text = "label3";
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.BackColor = System.Drawing.Color.Transparent;
-            this.pictureBox1.Location = new System.Drawing.Point(531, 536);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(753, 258);
-            this.pictureBox1.TabIndex = 7;
-            this.pictureBox1.TabStop = false;
-            // 
             // formsPlot1
             // 
             this.formsPlot1.Location = new System.Drawing.Point(531, 67);
@@ -143,42 +131,80 @@ namespace SoapySDRFFTGUI
             // 
             // numericUpDown1
             // 
-            this.numericUpDown1.Increment = new decimal(new int[] {
-            500000,
-            0,
-            0,
-            0});
-            this.numericUpDown1.Location = new System.Drawing.Point(336, 36);
-            this.numericUpDown1.Maximum = new decimal(new int[] {
-            1800000000,
-            0,
-            0,
-            0});
-            this.numericUpDown1.Minimum = new decimal(new int[] {
-            24000000,
-            0,
-            0,
-            0});
+            this.numericUpDown1.Increment = new decimal(new int[] { 250000, 0, 0, 0 });
+            this.numericUpDown1.Location = new System.Drawing.Point(336, 34);
+            this.numericUpDown1.Maximum = new decimal(new int[] { 1800000000, 0, 0, 0 });
+            this.numericUpDown1.Minimum = new decimal(new int[] { 24000000, 0, 0, 0 });
             this.numericUpDown1.Name = "numericUpDown1";
             this.numericUpDown1.Size = new System.Drawing.Size(95, 20);
             this.numericUpDown1.TabIndex = 10;
-            this.numericUpDown1.Value = new decimal(new int[] {
-            745500000,
-            0,
-            0,
-            0});
+            this.numericUpDown1.Value = new decimal(new int[] { 745500000, 0, 0, 0 });
             this.numericUpDown1.ValueChanged += new System.EventHandler(this.numericUpDown1_ValueChanged);
+            // 
+            // numericUpDown2
+            // 
+            this.numericUpDown2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.numericUpDown2.Increment = new decimal(new int[] { 2, 0, 0, 0 });
+            this.numericUpDown2.Location = new System.Drawing.Point(255, -191);
+            this.numericUpDown2.Maximum = new decimal(new int[] { 1024, 0, 0, 0 });
+            this.numericUpDown2.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
+            this.numericUpDown2.Name = "numericUpDown2";
+            this.numericUpDown2.Size = new System.Drawing.Size(75, 20);
+            this.numericUpDown2.TabIndex = 11;
+            this.numericUpDown2.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.numericUpDown2.Value = new decimal(new int[] { 2, 0, 0, 0 });
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Location = new System.Drawing.Point(1022, 46);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(200, 100);
+            this.groupBox1.TabIndex = 12;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "groupBox1";
+            // 
+            // numericUpDown3
+            // 
+            this.numericUpDown3.Increment = new decimal(new int[] { 2, 0, 0, 0 });
+            this.numericUpDown3.Location = new System.Drawing.Point(255, 34);
+            this.numericUpDown3.Maximum = new decimal(new int[] { 4, 0, 0, 0 });
+            this.numericUpDown3.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            this.numericUpDown3.Name = "numericUpDown3";
+            this.numericUpDown3.Size = new System.Drawing.Size(75, 20);
+            this.numericUpDown3.TabIndex = 12;
+            this.numericUpDown3.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.numericUpDown3.Value = new decimal(new int[] { 4, 0, 0, 0 });
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Location = new System.Drawing.Point(600, 21);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(656, 50);
+            this.pictureBox1.TabIndex = 13;
+            this.pictureBox1.TabStop = false;
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(1186, 540);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(75, 23);
+            this.button3.TabIndex = 14;
+            this.button3.Text = "Clear Graph";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(43)))), ((int)(((byte)(43)))));
-            this.ClientSize = new System.Drawing.Size(1296, 808);
+            this.ClientSize = new System.Drawing.Size(1296, 583);
+            this.Controls.Add(this.button3);
+            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.numericUpDown3);
+            this.Controls.Add(this.numericUpDown2);
             this.Controls.Add(this.numericUpDown1);
             this.Controls.Add(this.formsPlot1);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.comboBox2);
             this.Controls.Add(this.button2);
@@ -189,19 +215,27 @@ namespace SoapySDRFFTGUI
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(113)))), ((int)(((byte)(194)))), ((int)(((byte)(87)))));
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Location = new System.Drawing.Point(15, 15);
-            this.MaximumSize = new System.Drawing.Size(1312, 847);
-            this.MinimumSize = new System.Drawing.Size(1312, 847);
+            this.MaximumSize = new System.Drawing.Size(1312, 622);
+            this.MinimumSize = new System.Drawing.Size(1312, 622);
             this.Name = "Form1";
             this.Text = "SoapySDR FFT GUI";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown3)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
-
         }
 
-        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Button button3;
+
+        private System.Windows.Forms.PictureBox pictureBox1;
+
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.NumericUpDown numericUpDown3;
+
+        private System.Windows.Forms.NumericUpDown numericUpDown2;
 
         private System.Windows.Forms.Label label2;
 
@@ -220,7 +254,6 @@ namespace SoapySDRFFTGUI
 
         private System.Windows.Forms.ComboBox comboBox1;
         private ScottPlot.FormsPlot formsPlot1;
-        private PictureBox pictureBox1;
-        private NumericUpDown numericUpDown1;
+        private System.Windows.Forms.NumericUpDown numericUpDown1;
     }
 }
