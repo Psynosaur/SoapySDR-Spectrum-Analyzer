@@ -261,7 +261,7 @@ namespace SoapySDRFFTGUI
                     // var val = sdr.GetGainRange(Direction.Rx, 0).Maximum * 0.7;
                     sdr.SetGain(Direction.Rx, 0, "LNA", 11);
                     sdr.SetGain(Direction.Rx, 0, "MIX", 11);
-                    sdr.SetGain(Direction.Rx, 0, "VGA", 9);
+                    sdr.SetGain(Direction.Rx, 0, "VGA", 11);
                 }
 
                 if (!sdr.DriverKey.Equals("Airspy"))
@@ -462,7 +462,8 @@ namespace SoapySDRFFTGUI
             double[] paddedSignal = FftSharp.Pad.ZeroPad(radioValues);
             System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(paddedSignal);
             var freqScale = FftSharp.FFT.FrequencyResolution(spectrum.Length, bytesPerSample );
-            double[] fftMag = FftSharp.FFT.Power(spectrum);
+            double[] fftMag = FftSharp.FFT.Magnitude(spectrum);
+            double[] filtered = FftSharp.Filter.LowPass(fftMag.Skip(1).ToArray(), sampleRate, maxFrequency: 48000);
             //double[] freq = FftSharp.FFT.FrequencyScale(fftMag.Length, 5_000_000);
             //double[] fftMag = FftSharp.Transform.FFTpower(paddedAudio);
             FftValues = new double[fftMag.Length - 1];
@@ -472,7 +473,7 @@ namespace SoapySDRFFTGUI
             //double[] psd = FftSharp.FFT.Power(spectrum);
             //double[] freq = FftSharp.FFT.FrequencyScale(psd.Length, 5_000_000);
             //formsPlot1.Plot.AddScatterLines(freq, psd);
-            var tempArray = fftMag.Skip(1).ToArray();
+            var tempArray = filtered.Skip(1).ToArray();
 
             Array.Copy(tempArray, FftValues, tempArray.Length);
 
@@ -493,8 +494,8 @@ namespace SoapySDRFFTGUI
             }
 
             
-            if (DrawCnt < 10) DrawCnt += 1;
-            if (DrawCnt == 10)
+            if (DrawCnt < 30) DrawCnt += 1;
+            if (DrawCnt == 30)
             {
                 DrawCnt = 0;
                 formsPlot1.Plot.Clear();
@@ -512,7 +513,8 @@ namespace SoapySDRFFTGUI
             listBox1.Items.Add($" Stop Frequency :  {stopFreq} MHz");
 
             var highLow = GetMinMax(FftValues);
-            formsPlot1.Plot.SetAxisLimits(startFreq, stopFreq, highLow.Max - 15, highLow.Max + 3);
+            // formsPlot1.Plot.SetAxisLimits(startFreq, stopFreq, highLow.Max - 15, highLow.Max + 3);
+            formsPlot1.Plot.SetAxisLimits(startFreq, stopFreq, highLow.Min, highLow.Max + 150);
             var arrangeArr = new double[FftValues.Length];
             int j = 0;
             for (int i = FftValues.Length / 2; i >  0; i--)

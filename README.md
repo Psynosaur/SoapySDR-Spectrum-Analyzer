@@ -9,18 +9,20 @@ SoapySDR FFT viewer(in progress)
  - PlutoSDR
  - SDRPlay 
 
-### Initial Device enumeration
-![Screen](./SoapySDRFFTGUI/images/initial.png)
-### Query SDR device
-![Screen](./SoapySDRFFTGUI/images/query.png)
-### Reading 1 frame buffer
-![Screen](./SoapySDRFFTGUI/images/sample.png)
+### Program sample
+![Screen](./SoapySDRFFTGUI/images/Spectrum vs Online WB.png)
 ### TO DO :
 
-  - MSI installer
-    - Adds Resources/SoapySDR to Program Files/SoapySDR
-    - Adds environment variable SOAPY_SDR_ROOT
-    - Optionally add to PATH..
+### Install instructions
+
+```powershell
+.\install.ps1
+```
+  - Install script
+    - [x] Compiled dll's in release mode
+    - [x] Powershell install script
+      - Adds **SOAPY_SDR_ROOT** environment variable
+      - Adds **{SOAPY_SDR_ROOT}\bin** folder to path 
   - Interface
     - [x] List available sample rates
     - Gain slider(s)
@@ -29,10 +31,11 @@ SoapySDR FFT viewer(in progress)
       - Auto discovery?
     - [x] Connect to RX stream 
     - [x] Draw spectrum window 
-      - [ ] Make te spectrum unmirrored 
-        - [ ] transform the data correctly
+      - [x] Make te spectrum unmirrored 
+        - [x] transform the data correctly
+          - [ ] Fix the overlapping of frequency bins
     - [ ] Sort out bugs
-      - [ ] RTLSDR close
+      - [x] RTLSDR close
       - [ ] RTLSDR params not correctly set
       - [ ] Some gui things
   - More to come . . .
