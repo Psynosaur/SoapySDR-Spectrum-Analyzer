@@ -13,7 +13,7 @@ SoapySDR FFT viewer(in progress)
 ![Screen](./SoapySDRFFTGUI/images/initial.png)
 ### Query SDR device
 ![Screen](./SoapySDRFFTGUI/images/query.png)
-### Read 15 samplesnunucsc
+### Reading 1 frame buffer
 ![Screen](./SoapySDRFFTGUI/images/sample.png)
 ### TO DO :
 

@@ -341,13 +341,6 @@ namespace SoapySDRFFTGUI
                     listBox1.Items.Add($"Format {format} -> {formatSize} bytes * {MTU} bytes (MTU)");
                     if (format.Equals(StreamFormat.ComplexInt16))
                     {
-                        if (!_rxStreams[sdrNumber].Format.Equals(StreamFormat.ComplexInt16))
-                        {
-                            // Disable 16bit stream and start a 32bit one
-                            _rxStreams[sdrNumber].Deactivate();
-                            _rxStreams[sdrNumber] = sdr.SetupRxStream(format, channels, "");
-                            _rxStreams[sdrNumber].Activate(); 
-                        }
                         shortBuffer = new short[MTU * 2];
                         var errorCode = _rxStreams[sdrNumber].Read(ref shortBuffer, 100000, out streamResult);
                         while (errorCode.Equals(ErrorCode.Overflow))
@@ -358,7 +351,7 @@ namespace SoapySDRFFTGUI
                         listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Short buffer size:     " +
                                            shortBuffer.Length);
 
-                        // comboBox2.Enabled = false;
+                        comboBox2.Enabled = false;
                         Complex[] transformedValues = new Complex[shortBuffer.Length];
                         double largestMagnitude = 0; //Stores the largest magnitude that has been found 
                         int biggestMagIndex = 0;
@@ -380,13 +373,7 @@ namespace SoapySDRFFTGUI
 
                     if (format.Equals(StreamFormat.ComplexFloat32))
                     {
-                        if (!_rxStreams[sdrNumber].Format.Equals(StreamFormat.ComplexFloat32))
-                        {
-                            // Disable 16bit stream and start a 32bit one
-                            _rxStreams[sdrNumber].Deactivate();
-                            _rxStreams[sdrNumber] = sdr.SetupRxStream(format, channels, "");
-                            _rxStreams[sdrNumber].Activate(); 
-                        }
+                        
                         floatBuffer = new float[MTU * 2];
                         var errorCode = _rxStreams[sdrNumber].Read(ref floatBuffer, 100000, out streamResult);
                         while (errorCode.Equals(ErrorCode.Overflow))
@@ -396,21 +383,21 @@ namespace SoapySDRFFTGUI
                                            streamResult.NumSamples);
                         listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Float buffer size:     " +
                                            floatBuffer.Length);
-                        // comboBox2.Enabled = false;
+                        comboBox2.Enabled = false;
 
                         if (errorCode.Equals(ErrorCode.None))
                         {
                             //Data_To_FFT(floatBuffer, new short[0], sdr, _rxStreams[sdrNumber], numberOfSamples, true);
-                            var indexesOfZeros = new List<int>();
-
-                            for (var index = 0; index < floatBuffer.Length; index++)
-                            {
-                                var flt = floatBuffer[index];
-                                if (flt == 0)
-                                {
-                                    indexesOfZeros.Add(index);
-                                }
-                            }
+                            // var indexesOfZeros = new List<int>();
+                            //
+                            // for (var index = 0; index < floatBuffer.Length; index++)
+                            // {
+                            //     var flt = floatBuffer[index];
+                            //     if (flt == 0)
+                            //     {
+                            //         indexesOfZeros.Add(index);
+                            //     }
+                            // }
 
                             anotherFFT(new byte[0], floatBuffer);
                         }
@@ -479,7 +466,7 @@ namespace SoapySDRFFTGUI
             //double[] freq = FftSharp.FFT.FrequencyScale(fftMag.Length, 5_000_000);
             //double[] fftMag = FftSharp.Transform.FFTpower(paddedAudio);
             FftValues = new double[fftMag.Length - 1];
-            var window = new FftSharp.Windows.Cosine();
+            var window = new FftSharp.Windows.Blackman();
             double[] windowed = window.Apply(fftMag);
             //System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(radioValues);
             //double[] psd = FftSharp.FFT.Power(spectrum);
@@ -516,8 +503,8 @@ namespace SoapySDRFFTGUI
             var buffLen = FftValues.Length;
             var centerFreq = (double) numericUpDown1.Value;
             listBox1.Items.Add($" Centre Freq {centerFreq} Hz ");
-            var startFreq = (centerFreq - FFT_SIZE / 2 * chunkInHz) / 1000000f;
-            var stopFreq = (centerFreq + FFT_SIZE / 2 * chunkInHz) / 1000000f;
+            var startFreq = ((double)numericUpDown1.Value / 1000000f) - 5; // Convert to MHz
+            var stopFreq = startFreq + (FFT_SIZE * chunkInHz) / 1000000f; // Calculate the stop frequency based on the start frequency and FFT size
             listBox1.Items.Add($" Each FFT point is {chunkInKHz} kHz wide ");
             listBox1.Items.Add($" Chunks of {FFT_SIZE} FFT:  {1}");
             listBox1.Items.Add($" Buffer length:  {buffLen}");
@@ -525,8 +512,26 @@ namespace SoapySDRFFTGUI
             listBox1.Items.Add($" Stop Frequency :  {stopFreq} MHz");
 
             var highLow = GetMinMax(FftValues);
-            formsPlot1.Plot.SetAxisLimits(0, FftValues.Length / bytesPerSample, highLow.Max -30,highLow.Max + 10 );
-            formsPlot1.Plot.AddSignal(FftValues, (double)numericUpDown3.Value);
+            formsPlot1.Plot.SetAxisLimits(startFreq, stopFreq, highLow.Max - 15, highLow.Max + 3);
+            var arrangeArr = new double[FftValues.Length];
+            int j = 0;
+            for (int i = FftValues.Length / 2; i >  0; i--)
+            {
+                arrangeArr[j] = FftValues[i];
+                j++;
+            }
+
+            for (int i = FftValues.Length - 1; i > FftValues.Length / 2; i--)
+            {
+                arrangeArr[j] = FftValues[i];
+                j++;
+            }
+
+            var pew = sampleRate / 1_000_000f / FftValues.Length;
+            double[] xValues = Enumerable.Range(0, FftValues.Length).Select(i => startFreq + (i * pew)).ToArray();
+            formsPlot1.Plot.AddSignalXY(xValues, arrangeArr);
+            // formsPlot1.Plot.AddSignal(FftValues, (double)numericUpDown3.Value);
+            // formsPlot1.Plot.XAxis.DateTimeFormat(true);
             formsPlot1.RefreshRequest();
         }
         
@@ -1084,6 +1089,21 @@ namespace SoapySDRFFTGUI
         {
             formsPlot1.Plot.Clear();
             formsPlot1.RefreshRequest();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            for (var index = 0; index < _rxStreams.Length; index++)
+            {
+                if (_rxStreams[index] is not null)
+                {
+                    _rxStreams[index].Deactivate();
+                    _rxStreams[index].Close();
+                    _rxStreams[index] = null;
+                }
+            }
+
+            comboBox2.Enabled = true;
         }
     }
 }
