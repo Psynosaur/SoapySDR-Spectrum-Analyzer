@@ -10,7 +10,7 @@ SoapySDR FFT viewer(in progress)
  - SDRPlay 
 
 ### Program sample
-![Screen](./SoapySDRFFTGUI/images/Spectrum vs Online WB.png)
+![Screen](./SoapySDRFFTGUI/images/OnlineWBVSLocal.png)
 ### TO DO :
 
 ### Install instructions
