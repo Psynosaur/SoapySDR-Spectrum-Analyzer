@@ -337,7 +337,7 @@ namespace SoapySDRFFTGUI
                     listBox1.Items.Add($"setting{sdr.ReadSetting("bitpack")} ");
                     uint numberOfSamples = 1;
                     listBox1.Items.Add(
-                        $"Reading {numberOfSamples} samples, at {sampleRate / m} MSPS at { numericUpDown1.Value / m} MHz");
+                        $"Reading {numberOfSamples} samples, at {sampleRate / m} MSPS at {numericUpDown1.Value / m} MHz");
                     listBox1.Items.Add($"Format {format} -> {formatSize} bytes * {MTU} bytes (MTU)");
                     if (format.Equals(StreamFormat.ComplexInt16))
                     {
@@ -358,7 +358,7 @@ namespace SoapySDRFFTGUI
                         if (errorCode.Equals(ErrorCode.None))
                         {
                             Span<byte> byteSpan = MemoryMarshal.Cast<short, byte>(new Span<short>(shortBuffer));
-                            anotherFFT(byteSpan.ToArray());
+                            anotherFFT(byteSpan.ToArray(), null, format);
                             //Data_To_FFT(new float[0], shortBuffer, sdr, _rxStreams[sdrNumber], numberOfSamples);
                             //transformedValues = fft(shortBuffer);
                             //TheBestFFTAlgo(shortBuffer);
@@ -373,11 +373,14 @@ namespace SoapySDRFFTGUI
 
                     if (format.Equals(StreamFormat.ComplexFloat32))
                     {
-                        
                         floatBuffer = new float[MTU * 2];
                         var errorCode = _rxStreams[sdrNumber].Read(ref floatBuffer, 100000, out streamResult);
-                        while (errorCode.Equals(ErrorCode.Overflow))
+                        for (int i = 0; i < 10; i++)
+                        {
                             errorCode = _rxStreams[sdrNumber].Read(ref floatBuffer, 100000, out streamResult);
+                            if (errorCode.Equals(ErrorCode.None)) anotherFFT(new byte[0], floatBuffer, format);
+                        }
+
                         listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | Error code:     " + errorCode);
                         listBox1.Items.Add($"{DateTime.Now.ToLocalTime()} | StreamResult size:     " +
                                            streamResult.NumSamples);
@@ -385,22 +388,6 @@ namespace SoapySDRFFTGUI
                                            floatBuffer.Length);
                         comboBox2.Enabled = false;
 
-                        if (errorCode.Equals(ErrorCode.None))
-                        {
-                            //Data_To_FFT(floatBuffer, new short[0], sdr, _rxStreams[sdrNumber], numberOfSamples, true);
-                            // var indexesOfZeros = new List<int>();
-                            //
-                            // for (var index = 0; index < floatBuffer.Length; index++)
-                            // {
-                            //     var flt = floatBuffer[index];
-                            //     if (flt == 0)
-                            //     {
-                            //         indexesOfZeros.Add(index);
-                            //     }
-                            // }
-
-                            anotherFFT(new byte[0], floatBuffer);
-                        }
 
                         streamResult.Dispose();
                     }
@@ -422,7 +409,7 @@ namespace SoapySDRFFTGUI
             Restore_Window_Location();
         }
 
-        void anotherFFT(byte[] buffer, float[] floatBuf = null)
+        void anotherFFT(byte[] buffer, float[] floatBuf = null, string format = "")
         {
             var selectedSdr = comboBox1.SelectedItem;
             double sampleRate = 0;
@@ -430,14 +417,14 @@ namespace SoapySDRFFTGUI
                 if (sdr.DriverKey.Equals(selectedSdr))
                     sampleRate = sdr.GetSampleRate(Direction.Rx, 0);
 
-            int bytesPerSample = (int)numericUpDown3.Value;
-           
+            int bytesPerSample = format.Equals("CF32") ? 1 : 2;
+
             var chunkInHz = sampleRate / FFT_SIZE;
             var chunkInKHz = sampleRate / FFT_SIZE / 1_000f;
 
             radioValues = new double[buffer.Length / bytesPerSample];
             int bufferSampleCount;
-            
+
             if (floatBuf is not null)
             {
                 bufferSampleCount = floatBuf.Length / bytesPerSample;
@@ -450,18 +437,18 @@ namespace SoapySDRFFTGUI
 
             if (buffer.Length > 0)
             {
-                bufferSampleCount =  buffer.Length / bytesPerSample;
-                for (int i = 0 ; i < bufferSampleCount - 1; i++)
+                bufferSampleCount = buffer.Length / bytesPerSample;
+                for (int i = 0; i < bufferSampleCount - 1; i++)
                 {
-                    radioValues[i] = BitConverter.ToUInt16(buffer, i * bytesPerSample);;
+                    radioValues[i] = BitConverter.ToUInt16(buffer, i * bytesPerSample);
+                    ;
                 }
             }
-            
 
 
             double[] paddedSignal = FftSharp.Pad.ZeroPad(radioValues);
             System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(paddedSignal);
-            var freqScale = FftSharp.FFT.FrequencyResolution(spectrum.Length, bytesPerSample );
+            var freqScale = FftSharp.FFT.FrequencyResolution(spectrum.Length, bytesPerSample);
             double[] fftMag = FftSharp.FFT.Magnitude(spectrum);
             double[] filtered = FftSharp.Filter.LowPass(fftMag.Skip(1).ToArray(), sampleRate, maxFrequency: 48000);
             //double[] freq = FftSharp.FFT.FrequencyScale(fftMag.Length, 5_000_000);
@@ -493,19 +480,21 @@ namespace SoapySDRFFTGUI
             {
             }
 
-            
+
             if (DrawCnt < 30) DrawCnt += 1;
             if (DrawCnt == 30)
             {
                 DrawCnt = 0;
                 formsPlot1.Plot.Clear();
             }
-            
+
             var buffLen = FftValues.Length;
-            var centerFreq = (double) numericUpDown1.Value;
+            var centerFreq = (double)numericUpDown1.Value;
             listBox1.Items.Add($" Centre Freq {centerFreq} Hz ");
             var startFreq = ((double)numericUpDown1.Value / 1000000f) - 5; // Convert to MHz
-            var stopFreq = startFreq + (FFT_SIZE * chunkInHz) / 1000000f; // Calculate the stop frequency based on the start frequency and FFT size
+            var stopFreq =
+                startFreq + (FFT_SIZE * chunkInHz) /
+                1000000f; // Calculate the stop frequency based on the start frequency and FFT size
             listBox1.Items.Add($" Each FFT point is {chunkInKHz} kHz wide ");
             listBox1.Items.Add($" Chunks of {FFT_SIZE} FFT:  {1}");
             listBox1.Items.Add($" Buffer length:  {buffLen}");
@@ -517,7 +506,7 @@ namespace SoapySDRFFTGUI
             formsPlot1.Plot.SetAxisLimits(startFreq, stopFreq, highLow.Min, highLow.Max + 150);
             var arrangeArr = new double[FftValues.Length];
             int j = 0;
-            for (int i = FftValues.Length / 2; i >  0; i--)
+            for (int i = FftValues.Length / 2; i > 0; i--)
             {
                 arrangeArr[j] = FftValues[i];
                 j++;
@@ -536,7 +525,7 @@ namespace SoapySDRFFTGUI
             // formsPlot1.Plot.XAxis.DateTimeFormat(true);
             formsPlot1.RefreshRequest();
         }
-        
+
         public class MinMax
         {
             public double Min;
@@ -548,7 +537,7 @@ namespace SoapySDRFFTGUI
                 Max = max;
             }
         }
-        
+
         public MinMax GetMinMax(double[] sourceArray)
         {
             var minMax = new MinMax(sourceArray[0], sourceArray[0]);
@@ -556,13 +545,15 @@ namespace SoapySDRFFTGUI
             {
                 if (sourceArray[index] > minMax.Max)
                     minMax.Max = sourceArray[index];
-                if (sourceArray[index] < minMax.Min) {
+                if (sourceArray[index] < minMax.Min)
+                {
                     minMax.Min = sourceArray[index];
                 }
             }
+
             return minMax;
         }
-        
+
         public double GetSmallestElement(double[] sourceArray)
         {
             double maxElement = sourceArray[0];
@@ -571,6 +562,7 @@ namespace SoapySDRFFTGUI
                 if (sourceArray[index] > maxElement)
                     maxElement = sourceArray[index];
             }
+
             return maxElement;
         }
 
