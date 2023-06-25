@@ -446,16 +446,18 @@ namespace SoapySDRFFTGUI
             }
 
 
-            double[] paddedSignal = FftSharp.Pad.ZeroPad(radioValues);
-            System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(paddedSignal);
+            // double[] paddedSignal = FftSharp.Pad.ZeroPad(radioValues);
+            var window = new FftSharp.Windows.Hanning();
+            double[] windowed = window.Apply(radioValues);
+            System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(windowed);
             var freqScale = FftSharp.FFT.FrequencyResolution(spectrum.Length, bytesPerSample);
             double[] fftMag = FftSharp.FFT.Magnitude(spectrum);
             double[] filtered = FftSharp.Filter.LowPass(fftMag.Skip(1).ToArray(), sampleRate, maxFrequency: 48000);
             //double[] freq = FftSharp.FFT.FrequencyScale(fftMag.Length, 5_000_000);
             //double[] fftMag = FftSharp.Transform.FFTpower(paddedAudio);
             FftValues = new double[fftMag.Length - 1];
-            var window = new FftSharp.Windows.Blackman();
-            double[] windowed = window.Apply(fftMag);
+            // var window = new FftSharp.Windows.Blackman();
+            // double[] windowed = window.Apply(fftMag);
             //System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(radioValues);
             //double[] psd = FftSharp.FFT.Power(spectrum);
             //double[] freq = FftSharp.FFT.FrequencyScale(psd.Length, 5_000_000);

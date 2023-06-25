@@ -16,9 +16,9 @@ SoapySDR FFT viewer(in progress)
 ### Install instructions in powershell admin
 
 ```shell
-.\install.ps1
-Set SOAPY_SDR_ROOT environment variable to : C:\git\SoapySDR-FFT-GUI\SoapySDRFFTGUI\Resources\SoapySDR
-Set C:\git\SoapySDR-FFT-GUI\SoapySDRFFTGUI\Resources\SoapySDR\bin in PATH
+ .\install.ps1
+Set SOAPY_SDR_ROOT environment variable to : C:\git\SoapySDR-FFT-GUI\Resources\SoapySDR
+Set C:\git\SoapySDR-FFT-GUI\Resources\SoapySDR\bin in PATH
 Restart Powershell and use soapySDRUtil --info
 ```
 ### Run soapySDRUtil --info testing install
@@ -31,12 +31,12 @@ soapySDRUtil --info
 Lib Version: v0.8.1-gbb33b2d2
 API Version: v0.8.200
 ABI Version: v0.8-3
-Install root: C:\git\SoapySDR-FFT-GUI\SoapySDRFFTGUI\Resources\SoapySDR
-Search path:  C:\git\SoapySDR-FFT-GUI\SoapySDRFFTGUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3
-Module found: C:\git\SoapySDR-FFT-GUI\SoapySDRFFTGUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3/airspySupport.dll   (0.2.0-411f73e)
-Module found: C:\git\SoapySDR-FFT-GUI\SoapySDRFFTGUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3/PlutoSDRSupport.dll (0.2.1-a07c372)
-Module found: C:\git\SoapySDR-FFT-GUI\SoapySDRFFTGUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3/rtlsdrSupport.dll   (0.3.3-40d0708)
-Module found: C:\git\SoapySDR-FFT-GUI\SoapySDRFFTGUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3/sdrPlaySupport.dll  (0.4.1-c4bb9af)
+Install root: C:\git\SoapySDR-FFT-GUI\Resources\SoapySDR
+Search path:  C:\git\SoapySDR-FFT-GUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3
+Module found: C:\git\SoapySDR-FFT-GUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3/airspySupport.dll   (0.2.0-411f73e)
+Module found: C:\git\SoapySDR-FFT-GUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3/PlutoSDRSupport.dll (0.2.1-a07c372)
+Module found: C:\git\SoapySDR-FFT-GUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3/rtlsdrSupport.dll   (0.3.3-40d0708)
+Module found: C:\git\SoapySDR-FFT-GUI\Resources\SoapySDR/lib/SoapySDR/modules0.8-3/sdrPlaySupport.dll  (0.4.1-c4bb9af)
 Available factories... airspy, plutosdr, rtlsdr, sdrplay
 Available converters...
  -  CF32 -> [CF32, CS16, CS8, CU16, CU8]

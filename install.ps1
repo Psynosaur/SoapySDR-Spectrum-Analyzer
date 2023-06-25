@@ -1,4 +1,4 @@
-$soapySdrRoot = "$($PWD)\SoapySDRFFTGUI\Resources\SoapySDR"
+$soapySdrRoot = "$($PWD)\Resources\SoapySDR"
 
 [System.Environment]::SetEnvironmentVariable('SOAPY_SDR_ROOT', "$soapySdrRoot", 'Machine')
 Write-Output "Set SOAPY_SDR_ROOT environment variable to : $soapySdrRoot"

@@ -47,7 +47,7 @@
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="Pothosware.SoapySDR">
-      <HintPath>Resources\SoapySDR\bin\Pothosware.SoapySDR.dll</HintPath>
+      <HintPath>..\Resources\SoapySDR\bin\Pothosware.SoapySDR.dll</HintPath>
     </Reference>
     <Reference Include="ScottPlot, Version=4.1.64.0, Culture=neutral, PublicKeyToken=86698dc10387c39e, processorArchitecture=MSIL">
       <HintPath>..\packages\ScottPlot.4.1.64\lib\net462\ScottPlot.dll</HintPath>
