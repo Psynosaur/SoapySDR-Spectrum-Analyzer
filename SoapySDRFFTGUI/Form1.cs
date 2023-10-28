@@ -430,32 +430,27 @@ namespace SoapySDRFFTGUI
                 bufferSampleCount = floatBuf.Length / bytesPerSample;
                 radioValues = new double[floatBuf.Length / bytesPerSample];
                 for (int i = 0; i < bufferSampleCount - 1; i++)
-                {
                     radioValues[i] = BitConverter.ToUInt32(BitConverter.GetBytes(floatBuf[i * bytesPerSample]), 0);
-                }
             }
 
             if (buffer.Length > 0)
             {
                 bufferSampleCount = buffer.Length / bytesPerSample;
                 for (int i = 0; i < bufferSampleCount - 1; i++)
-                {
                     radioValues[i] = BitConverter.ToUInt16(buffer, i * bytesPerSample);
-                    ;
-                }
             }
 
 
             // double[] paddedSignal = FftSharp.Pad.ZeroPad(radioValues);
             var window = new FftSharp.Windows.Hanning();
             double[] windowed = window.Apply(radioValues);
-            System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(windowed);
-            var freqScale = FftSharp.FFT.FrequencyResolution(spectrum.Length, bytesPerSample);
-            double[] fftMag = FftSharp.FFT.Magnitude(spectrum);
-            double[] filtered = FftSharp.Filter.LowPass(fftMag.Skip(1).ToArray(), sampleRate, maxFrequency: 48000);
+            Complex[] spectrum = FftSharp.FFT.Forward(windowed);
+            // var freqScale = FftSharp.FFT.FrequencyResolution(spectrum.Length, bytesPerSample);
+            double[] fftMag = FftSharp.FFT.Power(spectrum);
+            double[] filtered = FftSharp.Filter.LowPass(fftMag.Skip(1).ToArray(), sampleRate, maxFrequency: 16384);
             //double[] freq = FftSharp.FFT.FrequencyScale(fftMag.Length, 5_000_000);
             //double[] fftMag = FftSharp.Transform.FFTpower(paddedAudio);
-            FftValues = new double[fftMag.Length - 1];
+            FftValues = new double[filtered.Length - 1];
             // var window = new FftSharp.Windows.Blackman();
             // double[] windowed = window.Apply(fftMag);
             //System.Numerics.Complex[] spectrum = FftSharp.FFT.Forward(radioValues);
@@ -505,7 +500,7 @@ namespace SoapySDRFFTGUI
 
             var highLow = GetMinMax(FftValues);
             // formsPlot1.Plot.SetAxisLimits(startFreq, stopFreq, highLow.Max - 15, highLow.Max + 3);
-            formsPlot1.Plot.SetAxisLimits(startFreq, stopFreq, highLow.Min, highLow.Max + 150);
+            formsPlot1.Plot.SetAxisLimits(startFreq, stopFreq, highLow.Min, highLow.Max +10);
             var arrangeArr = new double[FftValues.Length];
             int j = 0;
             for (int i = FftValues.Length / 2; i > 0; i--)
